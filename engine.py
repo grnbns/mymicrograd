@@ -28,30 +28,61 @@ class Value():
             return order
 
         order = reversed(topo_sort(self))
-        # print([str(o) for o in order])
         for value in order:
             value.backward()
 
-    def __add__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
-        out = Value(self.data + other.data, children=(self, other), op='+', partial=1.0)
+    def relu(self):
+        out = Value(self.data if self.data >= 0 else 0, children=(self, ), op='ReLU')
 
         def backward():
-            self.grad += 1.0 * out.grad
-            other.grad += 1.0 * out.grad
-            print(out.data, out.grad, self.grad, other.grad)
+            self.grad += out.grad * (out.grad > 0)
 
         out.backward = backward
         return out
 
+    def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data + other.data, children=(self, other), op='+')
+
+        def backward():
+            self.grad += 1.0 * out.grad
+            other.grad += 1.0 * out.grad
+            # print(out.data, out.grad, self.grad, other.grad)
+
+        out.backward = backward
+        return out
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
     def __mul__(self, other):
         other = other if isinstance(other, Value) else Value(other)
-        out = Value(self.data * other.data, children=(self, other), op='*', partial=other)
+        out = Value(self.data * other.data, children=(self, other), op='*')
 
         def backward():
             self.grad += other.data * out.grad
             other.grad += self.data * out.grad
-            print(out.data, out.grad, self.grad, other.grad)
+            # print(out.data, out.grad, self.grad, other.grad)
+
+        out.backward = backward
+        return out
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __sub__(self, other):
+        return self.__add__(-1.0*other)
+
+    def __rsub__(self, other):
+        return (self * -1.0).__add__(other)
+
+    def __pow__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data**other.data, children=(self, other), op='**')
+
+        def backward():
+            self.grad += (other.data * (self.data ** (other.data - 1))) * out.grad
+            # other.grad is useless to update
 
         out.backward = backward
         return out
@@ -59,13 +90,14 @@ class Value():
     def __str__(self):
         return f"Value({self.data, self.op, [c.data for c in self._prev]})"
 
-a = Value(3)
-b = Value(5)
-c = a * b
-d = b + a
-e = c + d
-print(e)
-e.backprop()
+# a = Value(0)
+# b = Value(5)
+# c = a * b
+# d = b + a
+# e = c + d
+# f = e.relu()
+# print(f)
+# f.backprop()
 
-print(a.grad)
-print(b.grad)
+# print(a.grad)
+# print(b.grad)
