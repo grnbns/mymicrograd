@@ -61,7 +61,7 @@ xs = [[1.0], [2.0], [3.0], [4.0]]
 ys: list[list[float]] = [[1.0], [4.0], [9.0], [16.0]]
 
 learning_rate = 0.001
-num_iters = 1000
+num_iters = 500
 
 # TRAINING LOOP
 for _ in range(num_iters):

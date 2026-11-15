@@ -32,10 +32,10 @@ class Value():
             value.backward()
 
     def relu(self):
-        out = Value(self.data if self.data >= 0 else 0, children=(self, ), op='ReLU')
+        out = Value(self.data if self.data > 0 else 0.01*self.data, children=(self, ), op='ReLU')
 
         def backward():
-            self.grad += out.grad * (out.grad > 0)
+            self.grad += out.grad * (1.0 if self.data > 0 else 0.01)
 
         out.backward = backward
         return out
